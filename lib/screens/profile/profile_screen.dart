@@ -101,6 +101,76 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 16),
+
+            // App Audio Settings Card (Moved from Dashboard)
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('App Audio Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            state.voiceGuidanceEnabled ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                            color: state.voiceGuidanceEnabled ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text('Voice Read-Aloud Assistant', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF475569))),
+                        ],
+                      ),
+                      Switch(
+                        value: state.voiceGuidanceEnabled,
+                        activeTrackColor: const Color(0xFF10B981),
+                        onChanged: (_) {
+                          state.toggleVoiceGuidance();
+                        },
+                      ),
+                    ],
+                  ),
+                  if (state.voiceGuidanceEnabled) ...[
+                    const Divider(height: 16, color: Color(0xFFF1F5F9)),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.translate_rounded, color: Color(0xFF94A3B8), size: 18),
+                            const SizedBox(width: 12),
+                            Text('Voice Language', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                        DropdownButton<String>(
+                          value: state.selectedLanguage,
+                          underline: const SizedBox(),
+                          icon: const Icon(Icons.arrow_drop_down_circle_outlined, color: Color(0xFF059669), size: 18),
+                          style: const TextStyle(color: Color(0xFF059669), fontWeight: FontWeight.bold, fontSize: 12),
+                          items: <String>['English', 'Hindi', 'Kannada'].map((String val) {
+                            return DropdownMenuItem<String>(value: val, child: Text(val));
+                          }).toList(),
+                          onChanged: (newVal) {
+                            if (newVal != null) {
+                              state.updateSelectedLanguage(newVal);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
             const SizedBox(height: 24),
 
             // Emergency SOS Button

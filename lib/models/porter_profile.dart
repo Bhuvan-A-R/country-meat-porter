@@ -26,6 +26,7 @@ class PorterProfile {
   });
 
   PorterProfile copyWith({
+    String? name,
     bool? isOnline,
     int? completedTrips,
     double? todayEarnings,
@@ -34,7 +35,7 @@ class PorterProfile {
   }) {
     return PorterProfile(
       id: id,
-      name: name,
+      name: name ?? this.name,
       phone: phone,
       vehicleType: vehicleType,
       vehicleNumber: vehicleNumber,

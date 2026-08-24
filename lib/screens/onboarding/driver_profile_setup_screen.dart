@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
+import '../../services/porter_state_service.dart';
 
 class DriverProfileSetupScreen extends StatefulWidget {
   const DriverProfileSetupScreen({super.key});
 
   @override
-  State<DriverProfileSetupScreen> createState() => _DriverProfileSetupScreenState();
+  State<DriverProfileSetupScreen> createState() =>
+      _DriverProfileSetupScreenState();
 }
 
 class _DriverProfileSetupScreenState extends State<DriverProfileSetupScreen> {
@@ -79,7 +82,10 @@ class _DriverProfileSetupScreenState extends State<DriverProfileSetupScreen> {
                                 decoration: BoxDecoration(
                                   color: brandRed,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
                                 child: const Icon(
                                   Icons.add_rounded,
@@ -190,7 +196,11 @@ class _DriverProfileSetupScreenState extends State<DriverProfileSetupScreen> {
                       InkWell(
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Selecting Aadhaar Card document photo...')),
+                            const SnackBar(
+                              content: Text(
+                                'Selecting Aadhaar Card document photo...',
+                              ),
+                            ),
                           );
                         },
                         borderRadius: BorderRadius.circular(12),
@@ -232,6 +242,9 @@ class _DriverProfileSetupScreenState extends State<DriverProfileSetupScreen> {
                       elevation: 0,
                     ),
                     onPressed: () {
+                      context.read<PorterStateService>().updateProfileName(
+                        _nameController.text,
+                      );
                       context.go('/');
                     },
                     child: Text(

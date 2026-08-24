@@ -18,11 +18,28 @@ class PorterStateService extends ChangeNotifier {
     weeklyEarnings: 5420.0,
   );
 
+  bool _voiceGuidanceEnabled = false;
+  String _selectedLanguage = 'English';
+
+  bool get voiceGuidanceEnabled => _voiceGuidanceEnabled;
+  String get selectedLanguage => _selectedLanguage;
+
+  void toggleVoiceGuidance() {
+    _voiceGuidanceEnabled = !_voiceGuidanceEnabled;
+    notifyListeners();
+  }
+
+  void updateSelectedLanguage(String language) {
+    _selectedLanguage = language;
+    notifyListeners();
+  }
+
   final List<PorterNotification> _notifications = [
     PorterNotification(
       id: 'NOTIF-101',
       title: '🔥 High Demand Surge Bonus!',
-      message: 'Earn ₹25 EXTRA per trip in Indiranagar & Whitefield hubs till 10:00 PM tonight.',
+      message:
+          'Earn ₹25 EXTRA per trip in Indiranagar & Whitefield hubs till 10:00 PM tonight.',
       timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
       type: NotificationType.surge,
       isRead: false,
@@ -30,7 +47,8 @@ class PorterStateService extends ChangeNotifier {
     PorterNotification(
       id: 'NOTIF-102',
       title: '💵 Cash Collection Deposit Reminder',
-      message: 'You have collected ₹960 COD cash today. Please deposit at Indiranagar Store Hub before 9:00 PM.',
+      message:
+          'You have collected ₹960 COD cash today. Please deposit at Indiranagar Store Hub before 9:00 PM.',
       timestamp: DateTime.now().subtract(const Duration(hours: 1)),
       type: NotificationType.cashDeposit,
       isRead: false,
@@ -38,7 +56,8 @@ class PorterStateService extends ChangeNotifier {
     PorterNotification(
       id: 'NOTIF-103',
       title: '✅ Partner KYC & Vehicle Approved',
-      message: 'Your EV Scooter registration (KA 03 EV 4912) and KYC documents have been verified.',
+      message:
+          'Your EV Scooter registration (KA 03 EV 4912) and KYC documents have been verified.',
       timestamp: DateTime.now().subtract(const Duration(hours: 5)),
       type: NotificationType.system,
       isRead: true,
@@ -50,15 +69,33 @@ class PorterStateService extends ChangeNotifier {
       id: 'CMP-2026-9041',
       customerName: 'Ananya Sharma',
       customerPhone: '+91 91234 56789',
-      deliveryAddress: 'Flat 402, Sunshine Heights, Indiranagar 100ft Rd, Bengaluru',
-      customerInstructions: 'Leave package with security guard if unreachable by phone.',
+      deliveryAddress:
+          'Flat 402, Sunshine Heights, Indiranagar 100ft Rd, Bengaluru',
+      customerInstructions:
+          'Leave package with security guard if unreachable by phone.',
       storeName: 'Country Meat Hub - Indiranagar',
       storePhone: '+91 80234 56780',
       storeAddress: '12th Main Rd, Indiranagar, Bengaluru',
       items: [
-        OrderItem(name: 'Fresh Chicken Breast (Skinless)', quantity: 2, weight: '500g', price: 240.0),
-        OrderItem(name: 'Mutton Curry Cut (Bone-in)', quantity: 1, weight: '500g', price: 480.0),
-        OrderItem(name: 'Ice Chill Gel Pack', quantity: 1, weight: 'Pack', price: 0.0, isVerified: true),
+        OrderItem(
+          name: 'Fresh Chicken Breast (Skinless)',
+          quantity: 2,
+          weight: '500g',
+          price: 240.0,
+        ),
+        OrderItem(
+          name: 'Mutton Curry Cut (Bone-in)',
+          quantity: 1,
+          weight: '500g',
+          price: 480.0,
+        ),
+        OrderItem(
+          name: 'Ice Chill Gel Pack',
+          quantity: 1,
+          weight: 'Pack',
+          price: 0.0,
+          isVerified: true,
+        ),
       ],
       totalAmount: 960.0,
       porterEarning: 85.0,
@@ -79,8 +116,20 @@ class PorterStateService extends ChangeNotifier {
       storePhone: '+91 80987 65430',
       storeAddress: 'ITPL Main Rd, Whitefield, Bengaluru',
       items: [
-        OrderItem(name: 'Farm Fresh Eggs (Pack of 12)', quantity: 1, weight: '12 pcs', price: 110.0, isVerified: true),
-        OrderItem(name: 'Cleaned Prawns (Large)', quantity: 1, weight: '250g', price: 350.0, isVerified: true),
+        OrderItem(
+          name: 'Farm Fresh Eggs (Pack of 12)',
+          quantity: 1,
+          weight: '12 pcs',
+          price: 110.0,
+          isVerified: true,
+        ),
+        OrderItem(
+          name: 'Cleaned Prawns (Large)',
+          quantity: 1,
+          weight: '250g',
+          price: 350.0,
+          isVerified: true,
+        ),
       ],
       totalAmount: 460.0,
       porterEarning: 65.0,
@@ -109,7 +158,11 @@ class PorterStateService extends ChangeNotifier {
 
   DeliveryOrder? get activeOrder {
     try {
-      return _orders.firstWhere((o) => o.status != OrderDeliveryStatus.delivered && o.status != OrderDeliveryStatus.cancelled);
+      return _orders.firstWhere(
+        (o) =>
+            o.status != OrderDeliveryStatus.delivered &&
+            o.status != OrderDeliveryStatus.cancelled,
+      );
     } catch (_) {
       return null;
     }
@@ -120,10 +173,29 @@ class PorterStateService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateProfileName(String name) {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty || trimmedName == _profile.name) return;
+
+    _profile = _profile.copyWith(name: trimmedName);
+    notifyListeners();
+  }
+
   void toggleItemVerification(String orderId, int itemIndex) {
     final orderIdx = _orders.indexWhere((o) => o.id == orderId);
     if (orderIdx != -1 && itemIndex < _orders[orderIdx].items.length) {
-      _orders[orderIdx].items[itemIndex].isVerified = !_orders[orderIdx].items[itemIndex].isVerified;
+      _orders[orderIdx].items[itemIndex].isVerified =
+          !_orders[orderIdx].items[itemIndex].isVerified;
+      notifyListeners();
+    }
+  }
+
+  void verifyAllItems(String orderId) {
+    final orderIdx = _orders.indexWhere((o) => o.id == orderId);
+    if (orderIdx != -1) {
+      for (var item in _orders[orderIdx].items) {
+        item.isVerified = true;
+      }
       notifyListeners();
     }
   }
@@ -153,7 +225,11 @@ class PorterStateService extends ChangeNotifier {
         _profile = _profile.copyWith(
           completedTrips: _profile.completedTrips + 1,
           todayEarnings: _profile.todayEarnings + updatedOrder.porterEarning,
-          todayCashCollected: _profile.todayCashCollected + (updatedOrder.isCashOnDelivery ? updatedOrder.cashToCollect : 0.0),
+          todayCashCollected:
+              _profile.todayCashCollected +
+              (updatedOrder.isCashOnDelivery
+                  ? updatedOrder.cashToCollect
+                  : 0.0),
           weeklyEarnings: _profile.weeklyEarnings + updatedOrder.porterEarning,
         );
       }
@@ -166,9 +242,7 @@ class PorterStateService extends ChangeNotifier {
     // If order exists in completed state, reset its status to assigned
     for (int i = 0; i < _orders.length; i++) {
       if (_orders[i].status == OrderDeliveryStatus.delivered) {
-        _orders[i] = _orders[i].copyWith(
-          status: OrderDeliveryStatus.assigned,
-        );
+        _orders[i] = _orders[i].copyWith(status: OrderDeliveryStatus.assigned);
         for (var item in _orders[i].items) {
           item.isVerified = false;
         }
@@ -189,9 +263,25 @@ class PorterStateService extends ChangeNotifier {
           storePhone: '+91 80234 56780',
           storeAddress: '12th Main Rd, Indiranagar, Bengaluru',
           items: [
-            OrderItem(name: 'Fresh Chicken Breast (Skinless)', quantity: 2, weight: '500g', price: 240.0),
-            OrderItem(name: 'Mutton Curry Cut (Bone-in)', quantity: 1, weight: '500g', price: 480.0),
-            OrderItem(name: 'Ice Chill Gel Pack', quantity: 1, weight: 'Pack', price: 0.0, isVerified: false),
+            OrderItem(
+              name: 'Fresh Chicken Breast (Skinless)',
+              quantity: 2,
+              weight: '500g',
+              price: 240.0,
+            ),
+            OrderItem(
+              name: 'Mutton Curry Cut (Bone-in)',
+              quantity: 1,
+              weight: '500g',
+              price: 480.0,
+            ),
+            OrderItem(
+              name: 'Ice Chill Gel Pack',
+              quantity: 1,
+              weight: 'Pack',
+              price: 0.0,
+              isVerified: false,
+            ),
           ],
           totalAmount: 960.0,
           porterEarning: 95.0,
@@ -207,4 +297,3 @@ class PorterStateService extends ChangeNotifier {
     notifyListeners();
   }
 }
-
