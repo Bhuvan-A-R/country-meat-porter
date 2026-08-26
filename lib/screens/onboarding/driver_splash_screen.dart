@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../widgets/country_meat_logo.dart';
 
 class DriverSplashScreen extends StatefulWidget {
@@ -11,7 +12,8 @@ class DriverSplashScreen extends StatefulWidget {
   State<DriverSplashScreen> createState() => _DriverSplashScreenState();
 }
 
-class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTickerProviderStateMixin {
+class _DriverSplashScreenState extends State<DriverSplashScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
@@ -25,7 +27,16 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
   ];
 
   Timer? _stepTimer;
+  Timer? _languageTimer;
   Timer? _navigationTimer;
+  String _appVersion = 'Loading version...';
+  int _partnerLanguageStep = 0;
+
+  static const _partnerLanguageLabels = [
+    'DELIVERY PARTNER',
+    'वितरण भागीदार',
+    'ವಿತರಣಾ ಪಾಲುದಾರ',
+  ];
 
   @override
   void initState() {
@@ -44,8 +55,23 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
 
-    // Sequence through loading messages
-    _stepTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+    _loadAppVersion();
+
+    _languageTimer = Timer.periodic(const Duration(milliseconds: 1250), (
+      timer,
+    ) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      setState(
+        () => _partnerLanguageStep =
+            (_partnerLanguageStep + 1) % _partnerLanguageLabels.length,
+      );
+    });
+
+    // Sequence through loading messages during the five-second splash.
+    _stepTimer = Timer.periodic(const Duration(milliseconds: 1250), (timer) {
       if (mounted) {
         setState(() {
           if (_loadingStep < _loadingMessages.length - 1) {
@@ -57,18 +83,28 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
       }
     });
 
-    // Navigate after sequence completes
-    _navigationTimer = Timer(const Duration(milliseconds: 3600), () {
+    _navigationTimer = Timer(const Duration(seconds: 8), () {
       if (mounted) {
         context.go('/login');
       }
     });
   }
 
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(
+        () =>
+            _appVersion = 'v${packageInfo.version}+${packageInfo.buildNumber}',
+      );
+    }
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
     _stepTimer?.cancel();
+    _languageTimer?.cancel();
     _navigationTimer?.cancel();
     super.dispose();
   }
@@ -103,7 +139,7 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
                   ),
                 ),
               ),
-              
+
               // Central Branding & Loading Card
               Center(
                 child: Column(
@@ -151,20 +187,70 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
 
                     // Portal Sub-label
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      width: 350,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(30),
                         border: Border.all(color: Colors.white24, width: 1.0),
                       ),
-                      child: Text(
-                        'PORTER PARTNER APP • वितरण भागीदार',
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 1.2,
-                        ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'PORTER PARTNER APP •',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          SizedBox(
+                            width: 145,
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 550),
+                              transitionBuilder: (child, animation) {
+                                final slideAnimation =
+                                    Tween<Offset>(
+                                      begin: const Offset(0, 1),
+                                      end: Offset.zero,
+                                    ).animate(
+                                      CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOutCubic,
+                                      ),
+                                    );
+                                return ClipRect(
+                                  child: SlideTransition(
+                                    position: slideAnimation,
+                                    child: FadeTransition(
+                                      opacity: animation,
+                                      child: child,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                _partnerLanguageLabels[_partnerLanguageStep],
+                                key: ValueKey<int>(_partnerLanguageStep),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                softWrap: false,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 48),
@@ -175,10 +261,12 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: LinearProgressIndicator(
-                          value: (_loadingStep + 1) / _loadingMessages.length,
+                          value: null,
                           minHeight: 5,
                           backgroundColor: Colors.white12,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -214,7 +302,11 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.ac_unit_rounded, color: Colors.white60, size: 14),
+                        const Icon(
+                          Icons.ac_unit_rounded,
+                          color: Colors.white60,
+                          size: 14,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           '100% COLD-CHAIN SECURED MEAT',
@@ -229,7 +321,7 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'v1.0.0+1',
+                      _appVersion,
                       style: GoogleFonts.inter(
                         fontSize: 9,
                         color: Colors.white38,
@@ -245,4 +337,3 @@ class _DriverSplashScreenState extends State<DriverSplashScreen> with SingleTick
     );
   }
 }
-

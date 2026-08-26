@@ -181,6 +181,13 @@ class PorterStateService extends ChangeNotifier {
     notifyListeners();
   }
 
+  void completeCashSettlement() {
+    if (_profile.todayCashCollected <= 0) return;
+
+    _profile = _profile.copyWith(todayCashCollected: 0);
+    notifyListeners();
+  }
+
   void toggleItemVerification(String orderId, int itemIndex) {
     final orderIdx = _orders.indexWhere((o) => o.id == orderId);
     if (orderIdx != -1 && itemIndex < _orders[orderIdx].items.length) {

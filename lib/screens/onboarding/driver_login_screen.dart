@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:local_auth/local_auth.dart';
 import '../../widgets/country_meat_logo.dart';
 
 class DriverLoginScreen extends StatefulWidget {
@@ -11,11 +12,43 @@ class DriverLoginScreen extends StatefulWidget {
 }
 
 class _DriverLoginScreenState extends State<DriverLoginScreen> {
+  final _auth = LocalAuthentication();
   final _phoneController = TextEditingController(text: '98765 43210');
   final _passwordController = TextEditingController(text: '••••••••');
   bool _obscurePassword = true;
   bool _isPhoneFocused = false;
   bool _isPasswordFocused = false;
+  bool _isAuthenticating = false;
+  List<BiometricType> _availableBiometrics = const [];
+
+  bool get _hasFaceUnlock => _availableBiometrics.contains(BiometricType.face);
+
+  String get _biometricLabel {
+    if (_hasFaceUnlock) return 'Face unlock';
+    if (_availableBiometrics.contains(BiometricType.fingerprint)) {
+      return 'Fingerprint login';
+    }
+    return 'Biometric Login';
+  }
+
+  IconData get _biometricIcon =>
+      _hasFaceUnlock ? Icons.face_rounded : Icons.fingerprint_rounded;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAvailableBiometrics();
+  }
+
+  Future<void> _loadAvailableBiometrics() async {
+    try {
+      if (!await _auth.canCheckBiometrics) return;
+      final available = await _auth.getAvailableBiometrics();
+      if (mounted) setState(() => _availableBiometrics = available);
+    } catch (_) {
+      // The login action still handles unsupported devices when tapped.
+    }
+  }
 
   @override
   void dispose() {
@@ -46,11 +79,17 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
 
                       // Brand Header Card
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 24,
+                          horizontal: 20,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(24),
-                          border: Border.all(color: const Color(0xFFF1F5F9), width: 1.2),
+                          border: Border.all(
+                            color: const Color(0xFFF1F5F9),
+                            width: 1.2,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.04),
@@ -64,11 +103,16 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                             const CountryMeatLogo(isRed: true, fontSize: 36),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFEF2F2),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: const Color(0xFFFCA5A5)),
+                                border: Border.all(
+                                  color: const Color(0xFFFCA5A5),
+                                ),
                               ),
                               child: Text(
                                 'DELIVERY PARTNER PORTAL',
@@ -128,7 +172,8 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Focus(
-                        onFocusChange: (focused) => setState(() => _isPhoneFocused = focused),
+                        onFocusChange: (focused) =>
+                            setState(() => _isPhoneFocused = focused),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           height: 56,
@@ -137,7 +182,9 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: _isPhoneFocused ? brandRed : const Color(0xFFE2E8F0),
+                              color: _isPhoneFocused
+                                  ? brandRed
+                                  : const Color(0xFFE2E8F0),
                               width: _isPhoneFocused ? 2.0 : 1.2,
                             ),
                             boxShadow: [
@@ -153,14 +200,20 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Text('🇮🇳', style: TextStyle(fontSize: 18)),
+                                    const Text(
+                                      '🇮🇳',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
                                     const SizedBox(width: 6),
                                     Text(
                                       '+91',
@@ -170,12 +223,20 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                                         color: primaryDark,
                                       ),
                                     ),
-                                    const Icon(Icons.arrow_drop_down_rounded, color: Color(0xFF64748B), size: 20),
+                                    const Icon(
+                                      Icons.arrow_drop_down_rounded,
+                                      color: Color(0xFF64748B),
+                                      size: 20,
+                                    ),
                                   ],
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Container(width: 1, height: 26, color: const Color(0xFFE2E8F0)),
+                              Container(
+                                width: 1,
+                                height: 26,
+                                color: const Color(0xFFE2E8F0),
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: TextField(
@@ -189,7 +250,11 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                                   ),
                                   decoration: InputDecoration(
                                     hintText: 'Enter 10-digit number',
-                                    hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.normal),
+                                    hintStyle: GoogleFonts.inter(
+                                      color: const Color(0xFF94A3B8),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                     border: InputBorder.none,
                                     isDense: true,
                                     contentPadding: EdgeInsets.zero,
@@ -217,7 +282,8 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Focus(
-                        onFocusChange: (focused) => setState(() => _isPasswordFocused = focused),
+                        onFocusChange: (focused) =>
+                            setState(() => _isPasswordFocused = focused),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           height: 56,
@@ -226,7 +292,9 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: _isPasswordFocused ? brandRed : const Color(0xFFE2E8F0),
+                              color: _isPasswordFocused
+                                  ? brandRed
+                                  : const Color(0xFFE2E8F0),
                               width: _isPasswordFocused ? 2.0 : 1.2,
                             ),
                             boxShadow: [
@@ -241,7 +309,11 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.lock_outline_rounded, color: Color(0xFF64748B), size: 20),
+                              const Icon(
+                                Icons.lock_outline_rounded,
+                                color: Color(0xFF64748B),
+                                size: 20,
+                              ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: TextField(
@@ -254,7 +326,11 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                                   ),
                                   decoration: InputDecoration(
                                     hintText: 'Enter your password',
-                                    hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.normal),
+                                    hintStyle: GoogleFonts.inter(
+                                      color: const Color(0xFF94A3B8),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.normal,
+                                    ),
                                     border: InputBorder.none,
                                     isDense: true,
                                     contentPadding: EdgeInsets.zero,
@@ -263,12 +339,16 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                               ),
                               IconButton(
                                 icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                                  _obscurePassword
+                                      ? Icons.visibility_off_outlined
+                                      : Icons.visibility_outlined,
                                   color: const Color(0xFF64748B),
                                   size: 20,
                                 ),
                                 onPressed: () {
-                                  setState(() => _obscurePassword = !_obscurePassword);
+                                  setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  );
                                 },
                               ),
                             ],
@@ -282,18 +362,22 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           InkWell(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Quick OTP Login initiated...')),
-                              );
-                            },
+                            onTap: _isAuthenticating
+                                ? null
+                                : _loginWithBiometrics,
                             child: Row(
                               children: [
-                                const Icon(Icons.fingerprint_rounded, color: brandRed, size: 18),
+                                Icon(_biometricIcon, color: brandRed, size: 18),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'Biometric Login',
-                                  style: GoogleFonts.inter(fontSize: 12, color: brandRed, fontWeight: FontWeight.w700),
+                                  _isAuthenticating
+                                      ? 'Checking identity...'
+                                      : _biometricLabel,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    color: brandRed,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ],
                             ),
@@ -301,12 +385,20 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                           InkWell(
                             onTap: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Password reset link sent to registered mobile.')),
+                                const SnackBar(
+                                  content: Text(
+                                    'Password reset link sent to registered mobile.',
+                                  ),
+                                ),
                               );
                             },
                             child: Text(
                               'Forgot Password?',
-                              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: const Color(0xFF64748B),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -326,7 +418,10 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                           children: [
                             Text(
                               'New to Country Meat? ',
-                              style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B)),
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: const Color(0xFF64748B),
+                              ),
                             ),
                             InkWell(
                               onTap: () => context.go('/register'),
@@ -378,8 +473,12 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                       ),
                     ),
                     onPressed: () {
-                      final rawPhone = _phoneController.text.replaceAll('-', '').replaceAll(' ', '');
-                      context.push('/verify-otp?phone=%2B91$rawPhone&isRegister=false');
+                      final rawPhone = _phoneController.text
+                          .replaceAll('-', '')
+                          .replaceAll(' ', '');
+                      context.push(
+                        '/verify-otp?phone=%2B91$rawPhone&isRegister=false',
+                      );
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -394,7 +493,11 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -405,5 +508,47 @@ class _DriverLoginScreenState extends State<DriverLoginScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _loginWithBiometrics() async {
+    setState(() => _isAuthenticating = true);
+
+    try {
+      final canAuthenticate =
+          await _auth.canCheckBiometrics || await _auth.isDeviceSupported();
+      if (!canAuthenticate) {
+        _showBiometricMessage(
+          'Set up fingerprint or face unlock on this Android device first.',
+        );
+        return;
+      }
+
+      final authenticated = await _auth.authenticate(
+        localizedReason:
+            'Verify your identity to sign in to Country Meat Porter',
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          stickyAuth: true,
+          useErrorDialogs: true,
+        ),
+      );
+
+      if (authenticated && mounted) {
+        context.go('/');
+      }
+    } catch (error) {
+      _showBiometricMessage(
+        'Biometric sign-in failed: $error. Use your password instead.',
+      );
+    } finally {
+      if (mounted) setState(() => _isAuthenticating = false);
+    }
+  }
+
+  void _showBiometricMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 }

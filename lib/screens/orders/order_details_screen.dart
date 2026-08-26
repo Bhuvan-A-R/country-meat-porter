@@ -1,6 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../services/porter_state_service.dart';
 import '../../models/delivery_order.dart';
 import '../../widgets/slide_to_confirm_button.dart';
@@ -285,7 +289,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         return Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
+          decoration: BoxDecoration(2
             color: const Color(0xFFFEF2F2),
             borderRadius: BorderRadius.circular(14),
           ),
@@ -346,67 +350,293 @@ class OrderDetailsScreen extends StatelessWidget {
     }
   }
 
-  void _showCodConfirmationDialog(
+  Future<void> _showCodPaymentScreenshotDialog(
     BuildContext context,
     PorterStateService state,
     DeliveryOrder order,
-  ) {
-    showDialog(
+  ) async {
+    XFile? screenshot;
+    await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.payments_rounded, color: Color(0xFFD97706), size: 28),
-            SizedBox(width: 10),
-            Text(
-              'Confirm COD Cash',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Have you collected the cash payment from customer?'),
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContentContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Attach COD payment screenshot'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Collect ₹${order.cashToCollect.toStringAsFixed(0)} from the customer, then attach the payment proof.',
+                  ),
+                  const SizedBox(height: 14),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await ImagePicker().pickImage(
+                        source: ImageSource.gallery,
+                      );
+                      if (picked != null) {
+                        setDialogState(() => screenshot = picked);
+                      }
+                    },
+                    icon: const Icon(Icons.upload_file_rounded),
+                    label: Text(
+                      screenshot == null
+                          ? 'Choose screenshot'
+                          : 'Screenshot attached',
+                    ),
+                  ),
+                ],
               ),
-              child: Text(
-                'CASH TO COLLECT: ₹${order.cashToCollect.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 15,
-                  color: Color(0xFFD97706),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('CANCEL'),
                 ),
-                textAlign: TextAlign.center,
+                ElevatedButton(
+                  onPressed: screenshot == null
+                      ? null
+                      : () {
+                          Navigator.pop(dialogContext);
+                          _showDeliveryOtpDialog(context, state, order);
+                        },
+                  child: const Text('CONTINUE TO OTP'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _showDeliveryOtpDialog(
+    BuildContext context,
+    PorterStateService state,
+    DeliveryOrder order,
+  ) async {
+    final controllers = List.generate(4, (_) => TextEditingController());
+    final focusNodes = List.generate(4, (_) => FocusNode());
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContentContext, setDialogState) => AlertDialog(
+          title: const Text('Confirm delivery with OTP'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Enter the customer\'s 4-digit OTP.'),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: Row(
+                  children: List.generate(4, (index) {
+                    final hasValue = controllers[index].text.isNotEmpty;
+                    final isFocused = focusNodes[index].hasFocus;
+
+                    return Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          left: index == 0 ? 0 : 5,
+                          right: index == 3 ? 0 : 5,
+                        ),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          height: 58,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isFocused
+                                  ? const Color(0xFF2563EB)
+                                  : hasValue
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFFE2E8F0),
+                              width: isFocused ? 2 : 1.2,
+                            ),
+                          ),
+                          child: Center(
+                            child: TextField(
+                              controller: controllers[index],
+                              focusNode: focusNodes[index],
+                              autofocus: index == 0,
+                              keyboardType: TextInputType.number,
+                              textAlign: TextAlign.center,
+                              textAlignVertical: TextAlignVertical.center,
+                              maxLength: 1,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF0F172A),
+                              ),
+                              decoration: const InputDecoration(
+                                counterText: '',
+                                border: InputBorder.none,
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              onChanged: (value) {
+                                if (value.isNotEmpty && index < 3) {
+                                  focusNodes[index + 1].requestFocus();
+                                } else if (value.isEmpty && index > 0) {
+                                  focusNodes[index - 1].requestFocus();
+                                }
+                                setDialogState(() {});
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
               ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final otp = controllers
+                    .map((controller) => controller.text)
+                    .join();
+                if (otp.length != 4) {
+                  ScaffoldMessenger.of(dialogContentContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('Enter the customer\'s 4-digit OTP.'),
+                    ),
+                  );
+                  return;
+                }
+                Navigator.pop(dialogContext);
+                state.updateOrderStatus(
+                  order.id,
+                  OrderDeliveryStatus.delivered,
+                );
+                await _showCompletionDialog(context, state, order);
+                if (context.mounted) context.go('/');
+              },
+              child: const Text('CONFIRM DELIVERY'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('CANCEL', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF059669),
+      ),
+    );
+    for (final controller in controllers) {
+      controller.dispose();
+    }
+    for (final focusNode in focusNodes) {
+      focusNode.dispose();
+    }
+  }
+
+  Future<void> _showCompletionDialog(
+    BuildContext context,
+    PorterStateService state,
+    DeliveryOrder order,
+  ) async {
+    final profile = state.profile;
+    final previousPayout = profile.todayEarnings - order.porterEarning;
+    final previousCash =
+        profile.todayCashCollected -
+        (order.isCashOnDelivery ? order.cashToCollect : 0.0);
+    final previousTrips = profile.completedTrips - 1;
+
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierLabel: 'Delivery completed',
+      barrierColor: Colors.black.withValues(alpha: 0.42),
+      transitionDuration: const Duration(milliseconds: 350),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 28, 20, 22),
+              color: Colors.white.withValues(alpha: 0.96),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.4, end: 1),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.elasticOut,
+                    builder: (context, scale, child) =>
+                        Transform.scale(scale: scale, child: child),
+                    child: const Icon(
+                      Icons.celebration_rounded,
+                      color: Color(0xFF059669),
+                      size: 64,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Congratulations!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Trip ${order.id} completed successfully.',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _CompletionStat(
+                          label: 'TOTAL PAYOUT',
+                          prefix: '₹',
+                          begin: previousPayout,
+                          end: profile.todayEarnings,
+                          color: const Color(0xFF059669),
+                        ),
+                      ),
+                      Expanded(
+                        child: _CompletionStat(
+                          label: 'COD COLLECTED',
+                          prefix: '₹',
+                          begin: previousCash,
+                          end: profile.todayCashCollected,
+                          color: const Color(0xFFD97706),
+                        ),
+                      ),
+                      Expanded(
+                        child: _CompletionStat(
+                          label: 'TRIPS DONE',
+                          begin: previousTrips.toDouble(),
+                          end: profile.completedTrips.toDouble(),
+                          color: const Color(0xFF2563EB),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('GO TO DASHBOARD'),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-              state.updateOrderStatus(order.id, OrderDeliveryStatus.delivered);
-            },
-            child: const Text('YES, CASH COLLECTED'),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -418,7 +648,6 @@ class OrderDetailsScreen extends StatelessWidget {
       (o) => o.id == orderId,
       orElse: () => state.orders.first,
     );
-
     final primary = Theme.of(context).colorScheme.primary;
     final verifiedCount = order.items.where((i) => i.isVerified).length;
 
@@ -1013,6 +1242,14 @@ class OrderDetailsScreen extends StatelessWidget {
           icon: Icons.takeout_dining_rounded,
           color: const Color(0xFF2563EB),
           onConfirmed: () {
+            if (order.items.any((item) => !item.isVerified)) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Verify every item before confirming pickup.'),
+                ),
+              );
+              return;
+            }
             state.updateOrderStatus(order.id, OrderDeliveryStatus.pickedUp);
           },
         );
@@ -1026,9 +1263,9 @@ class OrderDetailsScreen extends StatelessWidget {
           color: const Color(0xFF059669),
           onConfirmed: () {
             if (order.isCashOnDelivery) {
-              _showCodConfirmationDialog(context, state, order);
+              _showCodPaymentScreenshotDialog(context, state, order);
             } else {
-              state.updateOrderStatus(order.id, OrderDeliveryStatus.delivered);
+              _showDeliveryOtpDialog(context, state, order);
             }
           },
         );
@@ -1072,5 +1309,53 @@ class OrderDetailsScreen extends StatelessWidget {
           ),
         );
     }
+  }
+}
+
+class _CompletionStat extends StatelessWidget {
+  final String label;
+  final String prefix;
+  final double begin;
+  final double end;
+  final Color color;
+
+  const _CompletionStat({
+    required this.label,
+    this.prefix = '',
+    required this.begin,
+    required this.end,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: begin, end: end),
+      duration: const Duration(milliseconds: 1100),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Column(
+        children: [
+          Text(
+            '$prefix${value.toStringAsFixed(0)}',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: color,
+              fontSize: 17,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Color(0xFF64748B),
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

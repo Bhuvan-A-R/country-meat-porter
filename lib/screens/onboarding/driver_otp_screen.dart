@@ -254,6 +254,7 @@ class _DriverOtpScreenState extends State<DriverOtpScreen> {
                                 focusNode: _focusNodes[index],
                                 keyboardType: TextInputType.number,
                                 textAlign: TextAlign.center,
+                                textAlignVertical: TextAlignVertical.center,
                                 maxLength: 1,
                                 style: GoogleFonts.outfit(
                                   fontSize: 26,

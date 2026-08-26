@@ -5,18 +5,21 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/porter_state_service.dart';
 import '../../models/delivery_order.dart';
+import '../../core/theme/porter_ui_tokens.dart';
 import '../../widgets/country_meat_logo.dart';
-import '../../widgets/slide_to_confirm_button.dart';
 import '../../widgets/driver_sos_modal.dart';
 import '../../widgets/cod_cash_deposit_modal.dart';
 import 'notifications_bottom_sheet.dart';
+import 'widgets/cold_chain_bubble.dart';
+import 'widgets/dashboard_quick_button.dart';
+import 'widgets/dashboard_stat_item.dart';
+import 'widgets/driver_active_task_card.dart';
 
 class PorterDashboardScreen extends StatefulWidget {
   const PorterDashboardScreen({super.key});
 
   @override
-  State<PorterDashboardScreen> createState() =>
-      _PorterDashboardScreenState();
+  State<PorterDashboardScreen> createState() => _PorterDashboardScreenState();
 }
 
 class _PorterDashboardScreenState extends State<PorterDashboardScreen>
@@ -37,14 +40,8 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
-    _pulseAnimation = Tween<double>(
-      begin: 0.0,
-      end: 12.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
+    _pulseAnimation = Tween<double>(begin: 0.0, end: 12.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
 
@@ -54,80 +51,53 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
     super.dispose();
   }
 
-  Future<void> _launchMaps(
-    BuildContext context,
-    String query,
-  ) async {
+  Future<void> _launchMaps(BuildContext context, String query) async {
     final Uri url = Uri.parse(
       'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(query)}',
     );
 
     try {
       if (await canLaunchUrl(url)) {
-        await launchUrl(
-          url,
-          mode: LaunchMode.externalApplication,
-        );
+        await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Opening Google Maps for "$query"...',
-              ),
-            ),
+            SnackBar(content: Text('Opening Google Maps for "$query"...')),
           );
         }
       }
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Opening Google Maps for "$query"...',
-            ),
-          ),
+          SnackBar(content: Text('Opening Google Maps for "$query"...')),
         );
       }
     }
   }
 
-  Future<void> _makePhoneCall(
-    BuildContext context,
-    String phone,
-  ) async {
-    final Uri url = Uri(
-      scheme: 'tel',
-      path: phone,
-    );
+  Future<void> _makePhoneCall(BuildContext context, String phone) async {
+    final Uri url = Uri(scheme: 'tel', path: phone);
 
     try {
       if (await canLaunchUrl(url)) {
         await launchUrl(url);
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Calling $phone...'),
-            ),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Calling $phone...')));
         }
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Calling $phone...'),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Calling $phone...')));
       }
     }
   }
 
-  void _confirmGoOffline(
-    BuildContext context,
-    PorterStateService state,
-  ) {
+  void _confirmGoOffline(BuildContext context, PorterStateService state) {
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -145,10 +115,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
               SizedBox(width: 10),
               Text(
                 'Go Offline?',
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 18,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 18),
               ),
             ],
           ),
@@ -187,9 +154,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
               },
               child: const Text(
                 'GO OFFLINE',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -289,9 +254,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                     ),
                     child: const Text(
                       'GOT IT',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w900),
                     ),
                   ),
                 ),
@@ -310,8 +273,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
       _isPlayingAudio = true;
     });
 
-    String prefix =
-        '🔊 [Voice Assistant - $_selectedLanguage]: ';
+    String prefix = '🔊 [Voice Assistant - $_selectedLanguage]: ';
 
     if (_selectedLanguage == 'Hindi') {
       prefix = '🔊 [आवाज़ सहायक - हिंदी]: ';
@@ -323,11 +285,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.volume_up_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
+            const Icon(Icons.volume_up_rounded, color: Colors.white, size: 28),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -344,22 +302,17 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
         duration: const Duration(seconds: 4),
         backgroundColor: const Color(0xFF1E293B),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
 
-    Future.delayed(
-      const Duration(seconds: 4),
-      () {
-        if (mounted) {
-          setState(() {
-            _isPlayingAudio = false;
-          });
-        }
-      },
-    );
+    Future.delayed(const Duration(seconds: 4), () {
+      if (mounted) {
+        setState(() {
+          _isPlayingAudio = false;
+        });
+      }
+    });
   }
 
   String _getVoiceInstruction(DeliveryOrder? activeOrder) {
@@ -418,16 +371,9 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
         titleSpacing: 16,
         title: Row(
           children: [
-            const CountryMeatLogo(
-              isRed: true,
-              fontSize: 18,
-            ),
+            const CountryMeatLogo(isRed: true, fontSize: 18),
             const SizedBox(width: 10),
-            Container(
-              height: 18,
-              width: 1.2,
-              color: const Color(0xFFCBD5E1),
-            ),
+            Container(height: 18, width: 1.2, color: const Color(0xFFCBD5E1)),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -513,33 +459,19 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
             // 1. TOP PERFORMANCE / MONEY SUMMARY
             // ============================================================
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 17,
-              ),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFFF1F5F9),
-                  width: 1.2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.035),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 17),
+              decoration: PorterUiTokens.surfaceCard(
+                boxShadow: PorterUiTokens.surfaceShadow,
               ),
               child: Row(
                 children: [
                   Expanded(
-                    child: _MinimalistStatItem(
+                    child: DashboardStatItem(
                       title: 'Total Payout',
-                      value:
-                          '₹${profile.todayEarnings.toStringAsFixed(0)}',
-                      color: const Color(0xFF059669),
+                      value: '₹${profile.todayEarnings.toStringAsFixed(0)}',
+                      color: PorterUiTokens.success,
+                      animatedValue: profile.todayEarnings,
+                      valuePrefix: '₹',
                     ),
                   ),
                   Container(
@@ -549,15 +481,17 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                   ),
                   Expanded(
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: PorterUiTokens.brSm,
                       onTap: () {
                         CodCashDepositModal.show(context);
                       },
-                      child: _MinimalistStatItem(
-                        title: 'COD Collected',
+                      child: DashboardStatItem(
+                        title: 'Cash Collected',
                         value:
                             '₹${profile.todayCashCollected.toStringAsFixed(0)}',
-                        color: const Color(0xFFD97706),
+                        color: PorterUiTokens.warning,
+                        animatedValue: profile.todayCashCollected,
+                        valuePrefix: '₹',
                       ),
                     ),
                   ),
@@ -567,10 +501,11 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                     color: const Color(0xFFE2E8F0),
                   ),
                   Expanded(
-                    child: _MinimalistStatItem(
+                    child: DashboardStatItem(
                       title: 'Trips Done',
                       value: '${profile.completedTrips}',
-                      color: const Color(0xFF2563EB),
+                      color: PorterUiTokens.info,
+                      animatedValue: profile.completedTrips.toDouble(),
                     ),
                   ),
                 ],
@@ -603,24 +538,19 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: profile.isOnline
-                            ? const [
-                                Color(0xFF10B981),
-                                Color(0xFF059669),
-                              ]
-                            : const [
-                                Color(0xFF334155),
-                                Color(0xFF1E293B),
-                              ],
+                            ? const [Color(0xFF10B981), Color(0xFF059669)]
+                            : const [Color(0xFF334155), Color(0xFF1E293B)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: PorterUiTokens.brXl,
                       boxShadow: [
                         BoxShadow(
-                          color: (profile.isOnline
-                                  ? const Color(0xFF10B981)
-                                  : Colors.black87)
-                              .withValues(alpha: 0.28),
+                          color:
+                              (profile.isOnline
+                                      ? const Color(0xFF10B981)
+                                      : Colors.black87)
+                                  .withValues(alpha: 0.28),
                           blurRadius: profile.isOnline
                               ? 12.0 + _pulseAnimation.value
                               : 10,
@@ -644,8 +574,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                   children: [
                     CircleAvatar(
                       radius: 26,
-                      backgroundColor:
-                          Colors.white.withValues(alpha: 0.22),
+                      backgroundColor: Colors.white.withValues(alpha: 0.22),
                       child: Icon(
                         profile.isOnline
                             ? Icons.two_wheeler_rounded
@@ -742,9 +671,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: const Color(0xFFF1F5F9),
-                  ),
+                  border: Border.all(color: const Color(0xFFF1F5F9)),
                 ),
                 child: const Column(
                   children: [
@@ -806,10 +733,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                     const Text(
                       'Tap the button below to restart the driver trip demo process.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(height: 18),
                     SizedBox(
@@ -826,10 +750,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                         onPressed: () {
                           state.resetOrAssignDemoOrder();
                         },
-                        icon: const Icon(
-                          Icons.replay_rounded,
-                          size: 20,
-                        ),
+                        icon: const Icon(Icons.replay_rounded, size: 20),
                         label: const Text(
                           'RESTART TRIP PROCESS DEMO',
                           style: TextStyle(
@@ -849,25 +770,19 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  _DriverActiveTaskCard(
+                  DriverActiveTaskCard(
                     order: activeOrder,
+                    onOpenDetails: () =>
+                        context.push('/order/${activeOrder.id}'),
                     onLaunchMaps: (query) {
                       _launchMaps(context, query);
                     },
                     onCallPhone: (phone) {
                       _makePhoneCall(context, phone);
                     },
-                    onUpdateStatus: (nextStatus) {
-                      state.updateOrderStatus(
-                        activeOrder.id,
-                        nextStatus,
-                      );
-                    },
                     voiceGuidanceEnabled: _voiceGuidanceEnabled,
                     onPlayVoice: () {
-                      _simulateAudioSpeech(
-                        _getVoiceInstruction(activeOrder),
-                      );
+                      _simulateAudioSpeech(_getVoiceInstruction(activeOrder));
                     },
                   ),
 
@@ -877,7 +792,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                   Positioned(
                     right: -5,
                     bottom: 82,
-                    child: _ColdChainBubble(
+                    child: ColdChainBubble(
                       animation: _pulseAnimation,
                       onTap: () {
                         _showColdChainInfo(context);
@@ -895,7 +810,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
             Row(
               children: [
                 Expanded(
-                  child: _MinimalistQuickButton(
+                  child: DashboardQuickButton(
                     icon: Icons.assignment_outlined,
                     label: 'My Tasks',
                     onTap: () {
@@ -905,9 +820,9 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _MinimalistQuickButton(
+                  child: DashboardQuickButton(
                     icon: Icons.account_balance_wallet_outlined,
-                    label: 'COD Deposit',
+                    label: 'Cash Settlement',
                     color: const Color(0xFFD97706),
                     onTap: () {
                       CodCashDepositModal.show(context);
@@ -916,7 +831,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _MinimalistQuickButton(
+                  child: DashboardQuickButton(
                     icon: Icons.sos_rounded,
                     label: 'SOS Support',
                     color: const Color(0xFFDC2626),
@@ -929,850 +844,6 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
             ),
 
             const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ==========================================================================
-// TOP STAT ITEM
-// ==========================================================================
-
-class _MinimalistStatItem extends StatelessWidget {
-  final String title;
-  final String value;
-  final Color color;
-
-  const _MinimalistStatItem({
-    required this.title,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: color,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Color(0xFF64748B),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ==========================================================================
-// FLOATING COLD CHAIN BUBBLE
-// ==========================================================================
-
-class _ColdChainBubble extends StatelessWidget {
-  final Animation<double> animation;
-  final VoidCallback onTap;
-
-  const _ColdChainBubble({
-    required this.animation,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(
-            animation.value / 3,
-            -animation.value / 4,
-          ),
-          child: child,
-        );
-      },
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 76,
-          padding: const EdgeInsets.symmetric(
-            horizontal: 9,
-            vertical: 10,
-          ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: const Color(0xFFBFDBFE),
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF2563EB).withValues(
-                  alpha: 0.18,
-                ),
-                blurRadius: 14,
-                spreadRadius: 1,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 32,
-                width: 32,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEFF6FF),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.ac_unit_rounded,
-                  color: Color(0xFF2563EB),
-                  size: 18,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const Text(
-                'Cold Chain',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF1E3A8A),
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Tap',
-                style: TextStyle(
-                  fontSize: 8,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ==========================================================================
-// ACTIVE TASK CARD
-// ==========================================================================
-
-class _DriverActiveTaskCard extends StatelessWidget {
-  final DeliveryOrder order;
-  final Function(String) onLaunchMaps;
-  final Function(String) onCallPhone;
-  final Function(OrderDeliveryStatus) onUpdateStatus;
-  final bool voiceGuidanceEnabled;
-  final VoidCallback onPlayVoice;
-
-  const _DriverActiveTaskCard({
-    required this.order,
-    required this.onLaunchMaps,
-    required this.onCallPhone,
-    required this.onUpdateStatus,
-    required this.voiceGuidanceEnabled,
-    required this.onPlayVoice,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-
-    final bool isPickupPhase =
-        order.status == OrderDeliveryStatus.assigned ||
-        order.status == OrderDeliveryStatus.arrivedAtStore;
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFF1F5F9),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ==============================================================
-          // ORDER ID + PAYOUT
-          // ==============================================================
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  order.id,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFFA7F3D0),
-                  ),
-                ),
-                child: Text(
-                  'PAYOUT ₹${order.porterEarning.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: Color(0xFF059669),
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // ==============================================================
-          // ROUTE TIMELINE
-          // ==============================================================
-          _buildVisualRouteTimeline(order),
-
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Divider(
-              height: 1,
-              color: Color(0xFFF1F5F9),
-            ),
-          ),
-
-          // ==============================================================
-          // PICKUP HUB
-          // ==============================================================
-          Container(
-            padding: EdgeInsets.all(
-              isPickupPhase ? 14 : 10,
-            ),
-            decoration: BoxDecoration(
-              color: isPickupPhase
-                  ? const Color(0xFFFFF7ED)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              border: isPickupPhase
-                  ? Border.all(
-                      color: const Color(0xFFFFEDD5),
-                      width: 1.5,
-                    )
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isPickupPhase
-                        ? const Color(0xFFEA580C)
-                        : const Color(0xFFFFF7ED),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.storefront_rounded,
-                    color: isPickupPhase
-                        ? Colors.white
-                        : const Color(0xFFEA580C),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'PICKUP STORE HUB',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFFEA580C),
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        order.storeName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        order.storeAddress,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ==============================================================
-          // HUB ACTIONS
-          // ==============================================================
-          if (isPickupPhase) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFFEA580C),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 1,
-                    ),
-                    onPressed: () {
-                      onCallPhone(order.storePhone);
-                    },
-                    icon: const Icon(
-                      Icons.phone_rounded,
-                      size: 19,
-                    ),
-                    label: const Text(
-                      'CALL HUB',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 1,
-                    ),
-                    onPressed: () {
-                      onLaunchMaps(order.storeAddress);
-                    },
-                    icon: const Icon(
-                      Icons.near_me_rounded,
-                      size: 19,
-                    ),
-                    label: const Text(
-                      'NAVIGATE HUB',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          const SizedBox(height: 12),
-
-          // ==============================================================
-          // CUSTOMER DROP
-          // ==============================================================
-          Container(
-            padding: EdgeInsets.all(
-              !isPickupPhase ? 14 : 10,
-            ),
-            decoration: BoxDecoration(
-              color: !isPickupPhase
-                  ? const Color(0xFFEFF6FF)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-              border: !isPickupPhase
-                  ? Border.all(
-                      color: const Color(0xFFDBEAFE),
-                      width: 1.5,
-                    )
-                  : null,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: !isPickupPhase
-                        ? primary
-                        : const Color(0xFFEFF6FF),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.location_on_rounded,
-                    color: !isPickupPhase
-                        ? Colors.white
-                        : primary,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'DROP CUSTOMER (${order.distanceKm} km)',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: primary,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        order.customerName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                      Text(
-                        order.deliveryAddress,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ==============================================================
-          // CUSTOMER ACTIONS
-          // ==============================================================
-          if (!isPickupPhase) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF059669),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 1,
-                    ),
-                    onPressed: () {
-                      onCallPhone(order.customerPhone);
-                    },
-                    icon: const Icon(
-                      Icons.phone_in_talk_rounded,
-                      size: 19,
-                    ),
-                    label: const Text(
-                      'CALL CUSTOMER',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          const Color(0xFF2563EB),
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(0, 50),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 1,
-                    ),
-                    onPressed: () {
-                      onLaunchMaps(order.deliveryAddress);
-                    },
-                    icon: const Icon(
-                      Icons.near_me_rounded,
-                      size: 19,
-                    ),
-                    label: const Text(
-                      'NAVIGATE DROP',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-
-          // ==============================================================
-          // COD COLLECTION
-          // ==============================================================
-          if (order.isCashOnDelivery) ...[
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0xFFFDE68A),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.payments_rounded,
-                    color: Color(0xFFD97706),
-                    size: 22,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'COLLECT CASH: ₹${order.cashToCollect.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        color: Color(0xFFB45309),
-                        fontWeight: FontWeight.w900,
-                        fontSize: 13,
-                        letterSpacing: 0.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 18),
-
-          // ==============================================================
-          // SLIDE ACTION
-          // ==============================================================
-          if (order.status ==
-              OrderDeliveryStatus.assigned) ...[
-            SlideToConfirmButton(
-              label: 'SLIDE TO ARRIVE AT STORE',
-              icon: Icons.storefront_rounded,
-              color: const Color(0xFFEA580C),
-              onConfirmed: () {
-                onUpdateStatus(
-                  OrderDeliveryStatus.arrivedAtStore,
-                );
-              },
-            ),
-          ] else if (order.status ==
-              OrderDeliveryStatus.arrivedAtStore) ...[
-            SlideToConfirmButton(
-              label: 'SLIDE TO CONFIRM PICKUP',
-              icon: Icons.takeout_dining_rounded,
-              color: const Color(0xFF2563EB),
-              onConfirmed: () {
-                onUpdateStatus(
-                  OrderDeliveryStatus.pickedUp,
-                );
-              },
-            ),
-          ] else if (order.status ==
-                  OrderDeliveryStatus.pickedUp ||
-              order.status ==
-                  OrderDeliveryStatus.inTransit) ...[
-            SlideToConfirmButton(
-              label: order.isCashOnDelivery
-                  ? 'SLIDE FOR COD DELIVERY'
-                  : 'SLIDE TO DELIVER',
-              icon: Icons.check_circle_rounded,
-              color: const Color(0xFF059669),
-              onConfirmed: () {
-                onUpdateStatus(
-                  OrderDeliveryStatus.delivered,
-                );
-              },
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // ==========================================================================
-  // ROUTE TIMELINE
-  // ==========================================================================
-
-  Widget _buildVisualRouteTimeline(
-    DeliveryOrder order,
-  ) {
-    final bool step1Done =
-        order.status != OrderDeliveryStatus.assigned;
-
-    final bool step2Done =
-        order.status == OrderDeliveryStatus.pickedUp ||
-        order.status == OrderDeliveryStatus.inTransit ||
-        order.status == OrderDeliveryStatus.delivered;
-
-    final bool step3Done =
-        order.status == OrderDeliveryStatus.delivered;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: 8,
-        horizontal: 4,
-      ),
-      child: Row(
-        children: [
-          _buildStepperNode(
-            icon: Icons.storefront_rounded,
-            title: 'HUB',
-            isCurrent:
-                order.status ==
-                        OrderDeliveryStatus.assigned ||
-                    order.status ==
-                        OrderDeliveryStatus.arrivedAtStore,
-            isCompleted: step1Done,
-            color: const Color(0xFFEA580C),
-          ),
-          Expanded(
-            child: Container(
-              height: 3,
-              color: step1Done
-                  ? const Color(0xFFEA580C)
-                  : const Color(0xFFE2E8F0),
-            ),
-          ),
-          _buildStepperNode(
-            icon: Icons.two_wheeler_rounded,
-            title: 'RIDE',
-            isCurrent:
-                order.status ==
-                        OrderDeliveryStatus.pickedUp ||
-                    order.status ==
-                        OrderDeliveryStatus.inTransit,
-            isCompleted: step2Done,
-            color: const Color(0xFF2563EB),
-          ),
-          Expanded(
-            child: Container(
-              height: 3,
-              color: step2Done
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFFE2E8F0),
-            ),
-          ),
-          _buildStepperNode(
-            icon: Icons.home_rounded,
-            title: 'DROP',
-            isCurrent:
-                order.status ==
-                OrderDeliveryStatus.delivered,
-            isCompleted: step3Done,
-            color: const Color(0xFF059669),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepperNode({
-    required IconData icon,
-    required String title,
-    required bool isCurrent,
-    required bool isCompleted,
-    required Color color,
-  }) {
-    Color contentColor = const Color(0xFF64748B);
-
-    if (isCompleted) {
-      contentColor = color;
-    } else if (isCurrent) {
-      contentColor = const Color(0xFF0F172A);
-    }
-
-    return Column(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isCurrent
-                ? color
-                : isCompleted
-                    ? color.withValues(alpha: 0.12)
-                    : const Color(0xFFF1F5F9),
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: isCurrent
-                  ? color
-                  : isCompleted
-                      ? color
-                      : const Color(0xFFCBD5E1),
-              width: 2,
-            ),
-            boxShadow: isCurrent
-                ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Icon(
-            isCompleted
-                ? Icons.check_rounded
-                : icon,
-            color: isCurrent
-                ? Colors.white
-                : isCompleted
-                    ? color
-                    : const Color(0xFF94A3B8),
-            size: 16,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight:
-                isCurrent || isCompleted
-                    ? FontWeight.w900
-                    : FontWeight.bold,
-            color: contentColor,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ==========================================================================
-// QUICK ACTION BUTTON
-// ==========================================================================
-
-class _MinimalistQuickButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color? color;
-  final VoidCallback onTap;
-
-  const _MinimalistQuickButton({
-    required this.icon,
-    required this.label,
-    this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final primary =
-        color ?? Theme.of(context).colorScheme.primary;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 8,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFF1F5F9),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: primary,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
           ],
         ),
       ),
