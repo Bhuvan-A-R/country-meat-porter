@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../services/porter_state_service.dart';
 import '../../models/delivery_order.dart';
 import '../../widgets/slide_to_confirm_button.dart';
@@ -350,12 +352,150 @@ class OrderDetailsScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _showCodQrDialog(
+    BuildContext context,
+    PorterStateService state,
+    DeliveryOrder order,
+  ) async {
+    var secondsRemaining = 120;
+    Timer? timer;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContentContext, setDialogState) {
+          timer ??= Timer.periodic(const Duration(seconds: 1), (_) {
+            if (!dialogContentContext.mounted) {
+              timer?.cancel();
+              return;
+            }
+            if (secondsRemaining <= 1) {
+              timer?.cancel();
+              setDialogState(() => secondsRemaining = 0);
+              return;
+            }
+            setDialogState(() => secondsRemaining--);
+          });
+
+          final minutes = (secondsRemaining ~/ 60).toString().padLeft(2, '0');
+          final seconds = (secondsRemaining % 60).toString().padLeft(2, '0');
+
+          return AlertDialog(
+            title: const Text('COD payment QR'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Ask the customer to scan and pay ₹${order.cashToCollect.toStringAsFixed(0)}.',
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 220,
+                  height: 220,
+                  child: QrImageView(
+                    data:
+                        'countrymeat://cod/${order.id}?amount=${order.cashToCollect.toStringAsFixed(2)}',
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'QR valid for $minutes:$seconds',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: secondsRemaining == 0
+                        ? Colors.red
+                        : const Color(0xFFB45309),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  timer?.cancel();
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text('CANCEL'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  timer?.cancel();
+                  Navigator.pop(dialogContext);
+                  _showCodPaymentScreenshotDialog(context, state, order);
+                },
+                child: const Text('CONTINUE TO PROOF'),
+              ),
+              OutlinedButton(
+                onPressed: () async {
+                  timer?.cancel();
+                  Navigator.pop(dialogContext);
+                  await _showDevPaymentSuccessDialog(context, state, order);
+                },
+                child: const Text('DEV: PAYMENT SUCCESS'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+    timer?.cancel();
+  }
+
+  Future<void> _showDevPaymentSuccessDialog(
+    BuildContext context,
+    PorterStateService state,
+    DeliveryOrder order,
+  ) async {
+    final reference =
+        'CMP-PAY-${DateTime.now().millisecondsSinceEpoch.toString().substring(4)}';
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle_rounded, color: Color(0xFF059669)),
+            SizedBox(width: 8),
+            Text('Payment successful'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '₹${order.cashToCollect.toStringAsFixed(0)} payment received.',
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Reference: $reference',
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _showDeliveryOtpDialog(context, state, order);
+            },
+            child: const Text('CONTINUE TO OTP'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _showCodPaymentScreenshotDialog(
     BuildContext context,
     PorterStateService state,
     DeliveryOrder order,
   ) async {
-    XFile? screenshot;
+    XFile? paymentProof;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
@@ -368,7 +508,7 @@ class OrderDetailsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Collect ₹${order.cashToCollect.toStringAsFixed(0)} from the customer, then attach the payment proof.',
+                    'Take a camera photo or upload a screenshot of the COD payment.',
                   ),
                   const SizedBox(height: 14),
                   OutlinedButton.icon(
@@ -377,15 +517,28 @@ class OrderDetailsScreen extends StatelessWidget {
                         source: ImageSource.gallery,
                       );
                       if (picked != null) {
-                        setDialogState(() => screenshot = picked);
+                        setDialogState(() => paymentProof = picked);
                       }
                     },
                     icon: const Icon(Icons.upload_file_rounded),
                     label: Text(
-                      screenshot == null
-                          ? 'Choose screenshot'
-                          : 'Screenshot attached',
+                      paymentProof == null
+                          ? 'Upload screenshot'
+                          : 'Proof attached',
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await ImagePicker().pickImage(
+                        source: ImageSource.camera,
+                      );
+                      if (picked != null) {
+                        setDialogState(() => paymentProof = picked);
+                      }
+                    },
+                    icon: const Icon(Icons.camera_alt_rounded),
+                    label: const Text('Take camera photo'),
                   ),
                 ],
               ),
@@ -395,7 +548,7 @@ class OrderDetailsScreen extends StatelessWidget {
                   child: const Text('CANCEL'),
                 ),
                 ElevatedButton(
-                  onPressed: screenshot == null
+                  onPressed: paymentProof == null
                       ? null
                       : () {
                           Navigator.pop(dialogContext);
@@ -1263,7 +1416,11 @@ class OrderDetailsScreen extends StatelessWidget {
           color: const Color(0xFF059669),
           onConfirmed: () {
             if (order.isCashOnDelivery) {
-              _showCodPaymentScreenshotDialog(context, state, order);
+              Future<void>.delayed(Duration.zero, () {
+                if (context.mounted) {
+                  _showCodQrDialog(context, state, order);
+                }
+              });
             } else {
               _showDeliveryOtpDialog(context, state, order);
             }

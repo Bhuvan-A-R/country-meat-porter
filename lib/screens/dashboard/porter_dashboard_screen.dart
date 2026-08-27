@@ -8,7 +8,6 @@ import '../../models/delivery_order.dart';
 import '../../core/theme/porter_ui_tokens.dart';
 import '../../widgets/country_meat_logo.dart';
 import '../../widgets/driver_sos_modal.dart';
-import '../../widgets/cod_cash_deposit_modal.dart';
 import 'notifications_bottom_sheet.dart';
 import 'widgets/cold_chain_bubble.dart';
 import 'widgets/dashboard_quick_button.dart';
@@ -482,9 +481,7 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                   Expanded(
                     child: InkWell(
                       borderRadius: PorterUiTokens.brSm,
-                      onTap: () {
-                        CodCashDepositModal.show(context);
-                      },
+                      onTap: null,
                       child: DashboardStatItem(
                         title: 'Cash Collected',
                         value:
@@ -815,17 +812,6 @@ class _PorterDashboardScreenState extends State<PorterDashboardScreen>
                     label: 'My Tasks',
                     onTap: () {
                       context.go('/orders');
-                    },
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: DashboardQuickButton(
-                    icon: Icons.account_balance_wallet_outlined,
-                    label: 'Cash Settlement',
-                    color: const Color(0xFFD97706),
-                    onTap: () {
-                      CodCashDepositModal.show(context);
                     },
                   ),
                 ),

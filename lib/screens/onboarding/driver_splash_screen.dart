@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import '../../widgets/country_meat_logo.dart';
 
 class DriverSplashScreen extends StatefulWidget {
   const DriverSplashScreen({super.key});
@@ -93,10 +92,7 @@ class _DriverSplashScreenState extends State<DriverSplashScreen>
   Future<void> _loadAppVersion() async {
     final packageInfo = await PackageInfo.fromPlatform();
     if (mounted) {
-      setState(
-        () =>
-            _appVersion = 'v${packageInfo.version}+${packageInfo.buildNumber}',
-      );
+      setState(() => _appVersion = 'v${packageInfo.version}');
     }
   }
 
@@ -157,29 +153,13 @@ class _DriverSplashScreenState extends State<DriverSplashScreen>
                           ),
                         );
                       },
-                      child: Container(
+                      child: Padding(
                         padding: const EdgeInsets.all(28),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.3),
-                              blurRadius: 30,
-                              spreadRadius: 2,
-                              offset: const Offset(0, 10),
-                            ),
-                            BoxShadow(
-                              color: brightRed.withValues(alpha: 0.5),
-                              blurRadius: 50,
-                              spreadRadius: -5,
-                            ),
-                          ],
-                        ),
-                        child: const CountryMeatLogo(
-                          isRed: true,
-                          fontSize: 32,
+                        child: Image.asset(
+                          'assets/images/logo_white.png',
+                          width: 190,
                           height: 70,
+                          fit: BoxFit.contain,
                         ),
                       ),
                     ),
